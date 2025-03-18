@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub MCP - Project Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-github"></i> GitHub MCP
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="reposLink">Repositories</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted text-uppercase">
+                        <span>Repositories</span>
+                    </h6>
+                    <ul class="nav flex-column" id="reposList">
+                        <li class="nav-item">
+                            <div class="spinner-border spinner-border-sm text-primary m-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            Loading repositories...
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div id="mainContent">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Dashboard</h1>
+                    </div>
+
+                    <div class="row row-cols-1 row-cols-md-3 g-4" id="dashboardCards">
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Select a Repository</h5>
+                                    <p class="card-text">Choose a repository from the sidebar to get started managing your projects.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="repoContent" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2" id="repoTitle">Repository Name</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-primary me-2" id="newIssueBtn">
+                                <i class="bi bi-plus"></i> New Issue
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search issues..." id="searchIssues">
+                                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterState">
+                                <option value="all">All Issues</option>
+                                <option value="open">Open</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterLabels">
+                                <option value="">All Labels</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Title</th>
+                                    <th>Labels</th>
+                                    <th>Assignee</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="issuesTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for creating/editing issues -->
+    <div class="modal fade" id="issueModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="issueModalTitle">New Issue</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="issueForm">
+                        <input type="hidden" id="issueId">
+                        <div class="mb-3">
+                            <label for="issueTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="issueTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="issueBody" class="form-label">Description</label>
+                            <textarea class="form-control" id="issueBody" rows="5"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="issueLabels" class="form-label">Labels</label>
+                                    <select class="form-select" id="issueLabels" multiple>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="issueAssignees" class="form-label">Assignees</label>
+                                    <select class="form-select" id="issueAssignees" multiple>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveIssueBtn">Save Issue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for issue details -->
+    <div class="modal fade" id="issueDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="issueDetailTitle">Issue #123: Issue Title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    Details
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Status:</dt>
+                                        <dd class="col-sm-8" id="detailStatus">Open</dd>
+                                        
+                                        <dt class="col-sm-4">Created:</dt>
+                                        <dd class="col-sm-8" id="detailCreated">2023-01-01</dd>
+                                        
+                                        <dt class="col-sm-4">Updated:</dt>
+                                        <dd class="col-sm-8" id="detailUpdated">2023-01-01</dd>
+                                        
+                                        <dt class="col-sm-4">Assignees:</dt>
+                                        <dd class="col-sm-8" id="detailAssignees">None</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    Labels
+                                </div>
+                                <div class="card-body" id="detailLabels">
+                                    <span class="badge bg-primary">enhancement</span>
+                                </div>
+                            </div>
+                            <div class="btn-group mt-3 w-100">
+                                <button type="button" class="btn btn-outline-success" id="editIssueBtn">Edit Issue</button>
+                                <button type="button" class="btn btn-outline-secondary" id="toggleStateBtn">Close Issue</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            Description
+                        </div>
+                        <div class="card-body">
+                            <div id="detailBody" class="markdown-body">
+                                Issue description will appear here.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            Comments
+                        </div>
+                        <div class="card-body">
+                            <div id="commentsList">
+                                <div class="text-center">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    Loading comments...
+                                </div>
+                            </div>
+                            <hr>
+                            <form id="commentForm" class="mt-3">
+                                <div class="mb-3">
+                                    <label for="commentBody" class="form-label">Add a comment</label>
+                                    <textarea class="form-control" id="commentBody" rows="3"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Post Comment</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

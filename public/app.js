@@ -163,6 +163,17 @@ const api = {
             showError('Failed to add comment. Please try again.');
             return null;
         }
+    },
+    
+    async fetchComments(owner, repo, issueNumber) {
+        try {
+            const response = await fetch(`/api/repos/${owner}/${repo}/issues/${issueNumber}/comments`);
+            if (!response.ok) throw new Error('Failed to fetch comments');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching comments:', error);
+            return [];
+        }
     }
 };
 
@@ -314,3 +325,21 @@ const ui = {
         });
     }
 };
+
+// Helper functions
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    
+    // Remove any existing error messages
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
+    
+    // Add the error message to the top of the page
+    document.body.insertBefore(errorDiv, document.body.firstChild);
+    
+    // Remove the error message after 5 seconds
+    setTimeout(() => {
+        errorDiv.remove();
+    }, 5000);
+}

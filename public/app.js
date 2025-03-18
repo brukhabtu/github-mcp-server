@@ -343,3 +343,97 @@ function showError(message) {
         errorDiv.remove();
     }, 5000);
 }
+
+async function loadRepositoryData(owner, repo) {
+    // Show repository content and hide dashboard
+    elements.mainContent.style.display = 'none';
+    elements.repoContent.style.display = 'block';
+    
+    // Update repository title
+    elements.repoTitle.textContent = repo;
+    
+    // Fetch issues, labels, and collaborators
+    const issues = await api.fetchIssues(owner, repo);
+    const labels = await api.fetchLabels(owner, repo);
+    const collaborators = await api.fetchCollaborators(owner, repo);
+    
+    // Render UI
+    ui.renderIssues(issues);
+    ui.renderLabelsDropdown(labels);
+    ui.renderCollaboratorsDropdown(collaborators);
+}
+
+async function showIssueDetails(issue) {
+    state.currentIssue = issue;
+    
+    // Update modal title and content
+    elements.issueDetailTitle.textContent = `Issue #${issue.number}: ${issue.title}`;
+    elements.detailStatus.textContent = issue.state.charAt(0).toUpperCase() + issue.state.slice(1);
+    elements.detailStatus.className = issue.state === 'open' ? 'text-success' : 'text-danger';
+    
+    elements.detailCreated.textContent = new Date(issue.created_at).toLocaleString();
+    elements.detailUpdated.textContent = new Date(issue.updated_at).toLocaleString();
+    
+    // Assignees
+    if (issue.assignees.length > 0) {
+        elements.detailAssignees.innerHTML = issue.assignees.map(a => 
+            `<span>${a.login}</span>`
+        ).join(', ');
+    } else {
+        elements.detailAssignees.textContent = 'None';
+    }
+    
+    // Labels
+    elements.detailLabels.innerHTML = '';
+    if (issue.labels.length > 0) {
+        issue.labels.forEach(label => {
+            const badge = document.createElement('span');
+            badge.className = 'badge me-1';
+            badge.style.backgroundColor = `#${label.color}`;
+            badge.textContent = label.name;
+            elements.detailLabels.appendChild(badge);
+        });
+    } else {
+        elements.detailLabels.textContent = 'None';
+    }
+    
+    // Description
+    elements.detailBody.innerHTML = marked.parse(issue.body || '');
+    
+    // Toggle button text based on issue state
+    elements.toggleStateBtn.textContent = issue.state === 'open' ? 'Close Issue' : 'Reopen Issue';
+    elements.toggleStateBtn.className = `btn ${issue.state === 'open' ? 'btn-outline-danger' : 'btn-outline-success'}`;
+    
+    // Fetch and render comments
+    await fetchIssueComments(issue.number);
+    
+    // Show the modal
+    elements.issueDetailModal.show();
+}
+
+async function fetchIssueComments(issueNumber) {
+    elements.commentsList.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            Loading comments...
+        </div>
+    `;
+    
+    try {
+        const comments = await api.fetchComments(state.currentOwner, state.currentRepo, issueNumber);
+        
+        // Also include the issue body as a "comment" from the issue creator
+        const issueAsComment = {
+            body: state.currentIssue.body,
+            user: state.currentIssue.user,
+            created_at: state.currentIssue.created_at
+        };
+        
+        ui.renderComments([issueAsComment, ...comments]);
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        elements.commentsList.innerHTML = '<p class="text-danger">Failed to load comments</p>';
+    }
+}

@@ -46,3 +46,122 @@ const elements = {
     commentForm: document.getElementById('commentForm'),
     commentBody: document.getElementById('commentBody')
 };
+
+// API helpers
+const api = {
+    async fetchRepositories() {
+        try {
+            const response = await fetch('/api/repos');
+            if (!response.ok) throw new Error('Failed to fetch repositories');
+            const data = await response.json();
+            state.repositories = data;
+            return data;
+        } catch (error) {
+            console.error('Error fetching repositories:', error);
+            showError('Failed to load repositories. Please check your GitHub token.');
+            return [];
+        }
+    },
+
+    async fetchIssues(owner, repo, filters = {}) {
+        try {
+            let url = `/api/repos/${owner}/${repo}/issues`;
+            
+            // Add query parameters for filtering
+            const params = new URLSearchParams();
+            if (filters.state) params.append('state', filters.state);
+            if (filters.labels) params.append('labels', filters.labels);
+            if (params.toString()) url += `?${params.toString()}`;
+            
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch issues');
+            const data = await response.json();
+            state.issues = data;
+            return data;
+        } catch (error) {
+            console.error('Error fetching issues:', error);
+            showError('Failed to load issues. Please try again.');
+            return [];
+        }
+    },
+
+    async fetchLabels(owner, repo) {
+        try {
+            const response = await fetch(`/api/repos/${owner}/${repo}/labels`);
+            if (!response.ok) throw new Error('Failed to fetch labels');
+            const data = await response.json();
+            state.labels = data;
+            return data;
+        } catch (error) {
+            console.error('Error fetching labels:', error);
+            return [];
+        }
+    },
+
+    async fetchCollaborators(owner, repo) {
+        try {
+            const response = await fetch(`/api/repos/${owner}/${repo}/collaborators`);
+            if (!response.ok) throw new Error('Failed to fetch collaborators');
+            const data = await response.json();
+            state.collaborators = data;
+            return data;
+        } catch (error) {
+            console.error('Error fetching collaborators:', error);
+            return [];
+        }
+    },
+
+    async createIssue(owner, repo, data) {
+        try {
+            const response = await fetch(`/api/repos/${owner}/${repo}/issues`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) throw new Error('Failed to create issue');
+            return await response.json();
+        } catch (error) {
+            console.error('Error creating issue:', error);
+            showError('Failed to create issue. Please try again.');
+            return null;
+        }
+    },
+
+    async updateIssue(owner, repo, issueNumber, data) {
+        try {
+            const response = await fetch(`/api/repos/${owner}/${repo}/issues/${issueNumber}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) throw new Error('Failed to update issue');
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating issue:', error);
+            showError('Failed to update issue. Please try again.');
+            return null;
+        }
+    },
+
+    async addComment(owner, repo, issueNumber, body) {
+        try {
+            const response = await fetch(`/api/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ body })
+            });
+            if (!response.ok) throw new Error('Failed to add comment');
+            return await response.json();
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            showError('Failed to add comment. Please try again.');
+            return null;
+        }
+    }
+};
